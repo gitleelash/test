@@ -17,16 +17,10 @@ steps:
     provisioningProfileLocation: 'secureFiles'
     provProfileSecureFile: $('AV_App_Store.mobileprovision'  #'AV_Test_Profile.mobileprovision' 'AV_App_Store.mobileprovision')
     removeProfile: true
-- task: CmdLine@2
-displayName: Bump build number
-  timeoutInMinutes: 1
-  inputs:
-    script: |
-        ./scripts/az-set-build-no.sh $(SchemaName) # SchemaName matches the target.
 - task: Npm@1
   inputs:
     command: 'install'
-    workingDir: './Actavivo - task: InstallAppleCertificate@2 inputs: certSecureFile: $('
+  workingDir: './Actavivo - task: InstallAppleCertificate@2 inputs: certSecureFile: $('
 - task: CocoaPods@0
   timeoutInMinutes: 5
   inputs:
