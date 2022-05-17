@@ -9,6 +9,7 @@ steps:
     workingDir: './Actavivo
 - task: InstallAppleCertificate@2
   inputs:
+    certSecureFile: $('IOS-Distro.p12') #IOS-Dev.p12 IOS-Distro.p12
   certPwd: '$(CertPW)'
     keychain: 'temp'
 - task: InstallAppleProvisioningProfile@1
@@ -17,7 +18,7 @@ steps:
     provProfileSecureFile: $('AV_App_Store.mobileprovision'  #'AV_Test_Profile.mobileprovision' 'AV_App_Store.mobileprovision')
     removeProfile: true
 - task: CocoaPods@0
-    inputs:
+  inputs:
     workingDirectory: './Actavivo/ios'
     forceRepoUpdate: false
 - task: Xcode@5
@@ -39,8 +40,7 @@ steps:
     archivePath: '$(Build.ArtifactStagingDirectory)/pack'
     args: '-xcconfig release.xcconfig'
 - task: AppStoreRelease@1
-  timeoutInMinutes: 25
-  condition: ne(variables['Build.Reason'], 'PullRequest')
+condition:ne(variables['Build.Reason'], 'PullRequest')
   inputs:
     serviceEndpoint: $(AppStoreServiceConnectionName)
     appIdentifier: $(BundleID)
