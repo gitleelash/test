@@ -1,5 +1,5 @@
 trigger:
-- test
+- test1
 pool:
   vmImage: 'macos-latest'
 steps:
