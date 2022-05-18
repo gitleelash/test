@@ -1,35 +1,3 @@
-Skip to content
-Search or jump to…
-Pull requests
-Issues
-Marketplace
-Explore
- 
-@gitleelash 
-crowdin
-/
-mobile-sdk-ios
-Public
-Code
-Issues
-10
-Pull requests
-3
-Discussions
-Actions
-Projects
-Wiki
-Security
-Insights
-mobile-sdk-ios/azure-pipelines.yml
-@serhii-londar
-serhii-londar Try to fix issue with repo checkout for tests job.
-Latest commit 591a119 on Dec 27, 2021
- History
- 3 contributors
-@serhii-londar@andrii-bodnar@NazarYavornytskyy
-97 lines (91 sloc)  2.61 KB
-   
 # Xcode
 # Build, test, and archive an Xcode workspace on macOS.
 # Add steps that install certificates, test, sign, and distribute the app, save build artifacts, and more:
