@@ -24,7 +24,6 @@ steps:
     sudo gem uninstall cocoapods -ax
     echo "installing cocoapods version latest"
     sudo gem install cocoapods
-  
     workingDirectory: './Actavivo/ios'
     forceRepoUpdate: false
 - task: InstallAppleCertificate@2
