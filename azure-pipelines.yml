@@ -1,9 +1,6 @@
 pool:
   vmImage: 'macos-latest'
 
-variables: 
-  FILEEXISTS: false
-
 steps:
 - task: CmdLine@2
   inputs:
