@@ -1,67 +1,71 @@
-# Xcode
-# Build, test, and archive an Xcode workspace on macOS.
-# Add steps that install certificates, test, sign, and distribute an app, save build artifacts, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/xcode
-
 trigger:
-- Development
+  branches:
+    include:
+    - main
+  paths:
+    include:
+      - 'iOS'
 
 pool:
   vmImage: 'macos-latest'
 
 steps:
-- task: PowerShell@2
-  inputs:
-    filePath: './devbuild.ps1'    
-- task: Npm@1
-  inputs:
-    command: 'install'
-    workingDir: './Actavivo'
+  - task: CocoaPods@0
+    displayName: 'installing pods'
+    inputs:
+      workingDirectory: 'iOS/ProjectName'
+      forceRepoUpdate: false
 
-- task: CocoaPods@0
-  inputs:
-  echo "uninstalling all cocoapods versions"
-    sudo gem uninstall cocoapods -ax
-    echo "installing cocoapods version latest"
-    sudo gem install cocoapods
-    workingDirectory:'./Actavivo/ios'
-    
-    - task: InstallAppleCertificate@2
-  inputs:
-    certSecureFile: 'IOS-Distro.p12' #IOS-Dev.p12 IOS-Distro.p12
-    certPwd: $(CertPW)
-    keychain: 'temp'
+  - task: DownloadSecureFile@1
+    displayName: 'Download project certificate'
+    inputs:
+      secureFile: 'certificates.p12'
 
-- task: InstallAppleProvisioningProfile@1
-  inputs:
-    provisioningProfileLocation: 'secureFiles'
-    provProfileSecureFile: 'AV_App_Store.mobileprovision'  #'AV_Test_Profile.mobileprovision' 'AV_App_Store.mobileprovision'
-- task: Xcode@5
-  inputs:
-    actions: 'build'
-    xcWorkspacePath: './Actavivo/ios/actavivo.xcworkspace'
-    scheme: 'actavivoIOS'
-    xcodeVersion: 'default'
-    packageApp: true
-    exportPath: '$(agent.buildDirectory)/output/$(configuration)'
-    exportOptions: 'plist'
-    exportOptionsPlist: 'pipelines/export.debug.plist'
-    signingOption: 'manual'
-    signingIdentity: '$(APPLE_CERTIFICATE_SIGNING_IDENTITY)'
-    provisioningProfileUuid: '$(APPLE_PROV_PROFILE_UUID)' 
-    archivePath: "$(system.defaultworkingdirectory)/archive"
-    teamId: '3ZPX86GR9G'
-    exportTeamId: '3ZPX86GR9G'
-    args: 'CODE_SIGNING_ALLOWED=No'
+  - task: DownloadSecureFile@1
+    displayName: 'Download provisional certificate'
+    inputs:
+      secureFile: 'nameOfCertificate.mobileprovision'
 
-- task: CopyFiles@2
-  inputs:
-    #sourceFolder: "$(system.defaultworkingdirectory)/archive"
-    contents: '**/*.ipa'
-    targetFolder: '$(build.artifactStagingDirectory)'
+  - task: InstallAppleCertificate@2
+    inputs:
+      certSecureFile: 'certificates.p12'
+      certPwd: '$(p12password)'
+      keychain: 'temp'
 
-- task: PublishBuildArtifacts@1
-  inputs:
-    pathtoPublish: '$(build.artifactStagingDirectory)/output/$(sdk)/$(configuration)'
-    ArtifactName: 'IOSdrop'
-    publishLocation: 'Container'
+  - task: InstallAppleProvisioningProfile@1
+    inputs:
+      provisioningProfileLocation: 'secureFiles'
+      provProfileSecureFile: 'nameOfCertificate.mobileprovision'
+
+  - task: Xcode@5
+    displayName: 'Build the app using Xcode'
+    inputs:
+      actions: 'build'
+      sdk: 'iphoneos'
+      scheme: 'projectName'
+      xcWorkspacePath: 'iOS/FolderName/projectName.xcworkspace'
+      packageApp: true
+      signingOption: 'manual'
+
+  - task: Xcode@5
+    displayName: 'Run XCTest/XCUITest'
+    inputs:
+      actions: 'test'
+      sdk: 'iphonesimulator'
+      xcWorkspacePath: 'iOS/FolderName/projectName.xcworkspace'
+      scheme: 'projectName'
+      xcodeVersion: 'default'
+      useXcpretty: true
+      publishJUnitResults: true
+      destinationPlatformOption: 'iOS' # Optional. Options: default, iOS, tvOS, macOS, custom
+      destinationPlatform: 'iOS Simulator'
+      destinationTypeOption: 'simulators' # Optional. Options: simulators, devices
+      destinationSimulators: 'iPhone 8' # Optional. Default value: iPhone8 for Xcode 11 and iPhone 7 for other iOS projects; Apple TV for tvOS projects.
+   
+  - task: PublishTestResults@2
+    displayName: 'Publishing test results'
+    inputs:
+      testResultsFormat: 'JUnit'
+      testResultsFiles: '**/junit.xml'
+      mergeTestResults: true
+      failTaskOnFailedTests: true
