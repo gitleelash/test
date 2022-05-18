@@ -1,53 +1,67 @@
+# Xcode
+# Build, test, and archive an Xcode workspace on macOS.
+# Add steps that install certificates, test, sign, and distribute an app, save build artifacts, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/xcode
+
 trigger:
 - Development
+
 pool:
   vmImage: 'macos-latest'
+
 steps:
+- task: PowerShell@2
+  inputs:
+    filePath: './devbuild.ps1'    
 - task: Npm@1
   inputs:
     command: 'install'
-    workingDir: './Actavivo
-- task: InstallAppleCertificate@2
-  inputs:
-    certSecureFile: $('IOS-Distro.p12') #IOS-Dev.p12 IOS-Distro.p12
-  certPwd: '$(CertPW)'
-    keychain: 'temp'
-- task: InstallAppleProvisioningProfile@1
-  inputs:
-    provisioningProfileLocation: 'secureFiles'
-    provProfileSecureFile: $('AV_App_Store.mobileprovision'  #'AV_Test_Profile.mobileprovision' 'AV_App_Store.mobileprovision')
-    removeProfile: true
+    workingDir: './Actavivo'
+
 - task: CocoaPods@0
+    echo "uninstalling all cocoapods versions"
+    sudo gem uninstall cocoapods -ax
+    echo "installing cocoapods version latest"
+    sudo gem install cocoapods
   inputs:
     workingDirectory: './Actavivo/ios'
     forceRepoUpdate: false
-- task: Xcode@5
-  displayName: Build
-  timeoutInMinutes: 15
+- task: InstallAppleCertificate@2
   inputs:
-    actions: 'archive' # build, clean, test, analyze, and archive
-    scheme: $('actavivoIOS')
-    sdk: 'iphoneos'
-    configuration: 'Release'
-    xcWorkspacePath: $('./Actavivo/ios/actavivo.xcworkspace')
+    certSecureFile: 'IOS-Distro.p12' #IOS-Dev.p12 IOS-Distro.p12
+    certPwd: $(CertPW)
+    keychain: 'temp'
+
+- task: InstallAppleProvisioningProfile@1
+  inputs:
+    provisioningProfileLocation: 'secureFiles'
+    provProfileSecureFile: 'AV_App_Store.mobileprovision'  #'AV_Test_Profile.mobileprovision' 'AV_App_Store.mobileprovision'
+- task: Xcode@5
+  inputs:
+    actions: 'build'
+    xcWorkspacePath: './Actavivo/ios/actavivo.xcworkspace'
+    scheme: 'actavivoIOS'
     xcodeVersion: 'default'
     packageApp: true
-    signingOption: 'default'
-    provisioningProfileUuid: '$(APPLE_PROV_PROFILE_UUID)' 
-    exportMethod: $(ExportMethod)
+    exportPath: '$(agent.buildDirectory)/output/$(configuration)'
     exportOptions: 'plist'
-    exportOptionsPlist: $('pipelines/export.debug.plist')
-    archivePath: '$(Build.ArtifactStagingDirectory)/pack'
-    args: '-xcconfig release.xcconfig'
-- task: AppStoreRelease@1
-condition:ne(variables['Build.Reason'], 'PullRequest')
+    exportOptionsPlist: 'pipelines/export.debug.plist'
+    signingOption: 'manual'
+    signingIdentity: '$(APPLE_CERTIFICATE_SIGNING_IDENTITY)'
+    provisioningProfileUuid: '$(APPLE_PROV_PROFILE_UUID)' 
+    archivePath: "$(system.defaultworkingdirectory)/archive"
+    teamId: '3ZPX86GR9G'
+    exportTeamId: '3ZPX86GR9G'
+    args: 'CODE_SIGNING_ALLOWED=No'
+
+- task: CopyFiles@2
   inputs:
-    serviceEndpoint: $(AppStoreServiceConnectionName)
-    appIdentifier: $(BundleID)
-    appType: 'iOS'
-    ipaPath: '**/*.ipa'
-    releaseTrack: 'TestFlight'
-    shouldSkipWaitingForProcessing: true # don't wait
-    shouldSkipSubmission: true # don't auto send to testers
-  env:
-    FASTLANE_ITC_TEAM_ID: $(ITCTeamID)
+    #sourceFolder: "$(system.defaultworkingdirectory)/archive"
+    contents: '**/*.ipa'
+    targetFolder: '$(build.artifactStagingDirectory)'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathtoPublish: '$(build.artifactStagingDirectory)/output/$(sdk)/$(configuration)'
+    ArtifactName: 'IOSdrop'
+    publishLocation: 'Container'
