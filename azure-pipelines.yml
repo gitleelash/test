@@ -19,8 +19,8 @@ steps:
     removeProfile: true
 - task: CocoaPods@0
   inputs:
-    workingDirectory:'./Actavivo/ios'
-    forceRepoUpdate: false
+  workingDirectory:'./Actavivo/ios'
+  forceRepoUpdate: false
     
 - task: Xcode@5
   displayName:Build
@@ -38,7 +38,7 @@ steps:
     exportOptions: 'plist'
     exportOptionsPlist: $('pipelines/export.debug.plist')
     archivePath: '$(Build.ArtifactStagingDirectory)/pack'
-    args: '-xcconfig release.xcconfig'
+     args: '-xcconfig release.xcconfig'
 - task: AppStoreRelease@1
 condition:ne(variables['Build.Reason'], 'PullRequest')
   inputs:
