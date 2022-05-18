@@ -17,10 +17,12 @@ steps:
     provisioningProfileLocation: 'secureFiles'
     provProfileSecureFile: $('AV_App_Store.mobileprovision'  #'AV_Test_Profile.mobileprovision' 'AV_App_Store.mobileprovision')
     removeProfile: true
-- task: CocoaPods@0
+
+  workingDirectory:
+  - task: CocoaPods@0
   inputs:
-  workingDirectory:'./Actavivo/ios'
-  forceRepoUpdate: false
+    workingDirectory: '''./Actavivo/ios'''
+    forceRepoUpdate: true
     
 - task: Xcode@5
   displayName:Build
