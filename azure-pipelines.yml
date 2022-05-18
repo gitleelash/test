@@ -3,25 +3,6 @@ trigger:
 pool:
   vmImage: 'macos-latest'
 steps:
-- task: Npm@1
-  inputs:
-    command: 'install'
-    workingDir: './Actavivo'
-- task: InstallAppleCertificate@2
-  inputs:
-    certSecureFile: $('IOS-Distro.p12') #IOS-Dev.p12 IOS-Distro.p12
-    certPwd: '$(CertPW)'
-    keychain: 'temp'
-- task: InstallAppleProvisioningProfile@1
-  inputs:
-    provisioningProfileLocation: 'secureFiles'
-    provProfileSecureFile: $('AV_App_Store.mobileprovision'  #'AV_Test_Profile.mobileprovision' 'AV_App_Store.mobileprovision')
-    removeProfile: true
-  workingDirectory :
-  - task: CocoaPods@0
-    inputs:
-    workingDirectory: '''./Actavivo/ios'''
-    forceRepoUpdate: true
 
 - task: Xcode@5
   inputs:
@@ -39,14 +20,3 @@ steps:
     exportOptionsPlist: $('pipelines/export.debug.plist')
     archivePath: '$(Build.ArtifactStagingDirectory)/pack'
     args: '-xcconfig release.xcconfig'
-- task: AppStoreRelease@1
-  inputs:
-    serviceEndpoint: $(AppStoreServiceConnectionName)
-    appIdentifier: $(BundleID)
-    appType: 'iOS'
-    ipaPath: '**/*.ipa'
-    releaseTrack: 'TestFlight'
-    shouldSkipWaitingForProcessing: true # don't wait
-    shouldSkipSubmission: true # don't auto send to testers
-  env:
-    FASTLANE_ITC_TEAM_ID: $(ITCTeamID)
