@@ -1,63 +1,93 @@
-# Xcode
-# Build, test, and archive an Xcode workspace on macOS.
-# Add steps that install certificates, test, sign, and distribute an app, save build artifacts, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/xcode
-
-trigger:
-- Development
-
 pool:
   vmImage: 'macos-latest'
 
+variables: 
+  FILEEXISTS: false
+
 steps:
+- task: CmdLine@2
+  inputs:
+    script: 'sudo gem install cocoapods'
+
+
 - task: PowerShell@2
   inputs:
-    filePath: './devbuild.ps1'    
-- task: Npm@1
+    targetType: 'inline'
+    script: 'Write-Host "##vso[task.setvariable variable=CP_HOME_DIR;]$(System.DefaultWorkingDirectory)/Cache"'
+
+- task: CacheBeta@0
   inputs:
-    command: 'install'
-    workingDir: './Actavivo'
+    key: PodReposTestZip | $(Agent.OS) | $(System.DefaultWorkingDirectory)/Konectom/Podfile.lock
+    path: $(System.DefaultWorkingDirectory)/Cache/tmp/
+  displayName: Cache Podfiles packages
+
+
+- bash: |
+    if [ -d $(System.DefaultWorkingDirectory)/Cache/tmp ]; then
+      echo "##vso[task.setVariable variable=FILEEXISTS]true"
+    fi
+
+- task: ExtractFiles@1
+  inputs:
+    archiveFilePatterns: '$(System.DefaultWorkingDirectory)/Cache/tmp/cocoapods.zip'
+    destinationFolder: '$(System.DefaultWorkingDirectory)/Cache/repos'
+    cleanDestinationFolder: true
+  condition: eq(variables.FILEEXISTS, 'true')
+
+- task: CmdLine@2
+  inputs:
+    script: 'pod repo add azure-company-project-_git-specrepository-ios https://$(gitUser):$(gitPat)@dev.azure.com/company/project/_git/repo'
 
 - task: CocoaPods@0
   inputs:
-    workingDirectory: './Actavivo/ios'
     forceRepoUpdate: false
+    workingDirectory: 'AppDir'
+
 - task: InstallAppleCertificate@2
   inputs:
-    certSecureFile: 'IOS-Distro.p12' #IOS-Dev.p12 IOS-Distro.p12
-    certPwd: $(CertPW)
+    certSecureFile: 'Certificats.p12'
+    certPwd: '$(certifPwd)'
     keychain: 'temp'
 
 - task: InstallAppleProvisioningProfile@1
   inputs:
     provisioningProfileLocation: 'secureFiles'
-    provProfileSecureFile: 'AV_App_Store.mobileprovision'  #'AV_Test_Profile.mobileprovision' 'AV_App_Store.mobileprovision'
+    provProfileSecureFile: 'ProvisionFile.mobileprovision'
+
 - task: Xcode@5
   inputs:
     actions: 'build'
-    xcWorkspacePath: './Actavivo/ios/actavivo.xcworkspace'
-    scheme: 'actavivoIOS'
-    xcodeVersion: 'default'
+    scheme: 'Konectom-dev'
+    sdk: "iphoneos13.0"
+    xcodeVersion: 'specifyPath'
+    xcodeDeveloperDir: '/Applications/Xcode_11.app'
+    configuration: 'Release'
+    xcWorkspacePath: 'Konectom/Konectom.xcworkspace'
     packageApp: true
-    exportPath: '$(agent.buildDirectory)/output/$(configuration)'
-    exportOptions: 'plist'
-    exportOptionsPlist: 'pipelines/export.debug.plist'
-    signingOption: 'manual'
-    signingIdentity: '$(APPLE_CERTIFICATE_SIGNING_IDENTITY)'
-    provisioningProfileUuid: '$(APPLE_PROV_PROFILE_UUID)' 
-    archivePath: "$(system.defaultworkingdirectory)/archive"
-    teamId: '3ZPX86GR9G'
-    exportTeamId: '3ZPX86GR9G'
-    args: 'CODE_SIGNING_ALLOWED=No'
+    signingOption: manual
+    signingIdentity: $(APPLE_CERTIFICATE_SIGNING_IDENTITY)
+    provisioningProfileUuid: $(APPLE_PROV_PROFILE_UUID)
+    exportPath: $(build.artifactstagingdirectory)/pkgApp
 
-- task: CopyFiles@2
+- task: CmdLine@2
   inputs:
-    #sourceFolder: "$(system.defaultworkingdirectory)/archive"
-    contents: '**/*.ipa'
-    targetFolder: '$(build.artifactStagingDirectory)'
+    script: 'ls -la $(build.artifactstagingdirectory)/pkgApp'
 
-- task: PublishBuildArtifacts@1
+- task: ArchiveFiles@2
   inputs:
-    pathtoPublish: '$(build.artifactStagingDirectory)/output/$(sdk)/$(configuration)'
-    ArtifactName: 'IOSdrop'
-    publishLocation: 'Container'
+    rootFolderOrFile: '$(System.DefaultWorkingDirectory)/Cache/repos/cocoapods'
+    includeRootFolder: true
+    archiveType: 'zip'
+    archiveFile: '$(System.DefaultWorkingDirectory)/Cache/tmp/cocoapods.zip'
+    replaceExistingArchive: true
+  condition: eq(variables.FILEEXISTS, 'false')
+
+- task: AppCenterDistribute@3
+  inputs:
+    serverEndpoint: 'AppCenterEndpoint'
+    appSlug: 'TestProject/TestApp'
+    appFile: $(build.artifactstagingdirectory)/pkgApp/App.ipa
+    releaseNotesOption: 'input'
+    releaseNotesInput: ''
+    destinationType: 'groups'
+    symbolsOption: Apple
