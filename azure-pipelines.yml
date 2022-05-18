@@ -19,10 +19,10 @@ steps:
     workingDir: './Actavivo'
 
 - task: CocoaPods@0
-    echo "uninstalling all cocoapods versions"
-    sudo gem uninstall cocoapods -ax
-    echo "installing cocoapods version latest"
-    sudo gem install cocoapods
+  echo "uninstalling all cocoapods versions"
+  sudo gem uninstall cocoapods -ax
+  echo "installing cocoapods version latest"
+  sudo gem install cocoapods
   inputs:
     workingDirectory: './Actavivo/ios'
     forceRepoUpdate: false
