@@ -11,7 +11,6 @@ pool:
 
 steps:
   - task: CocoaPods@0
-    displayName: 'installing pods'
     inputs:
       workingDirectory: 'iOS/ProjectName'
       forceRepoUpdate: false
