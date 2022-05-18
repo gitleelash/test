@@ -1,5 +1,6 @@
 trigger:
 - Development
+
 pool:
   vmImage: 'macos-latest'
 
