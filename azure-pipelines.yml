@@ -20,7 +20,7 @@ steps:
 
   workingDirectory:
   - task: CocoaPods@0
-  inputs:
+    inputs:
     workingDirectory: '''./Actavivo/ios'''
     forceRepoUpdate: true
     
