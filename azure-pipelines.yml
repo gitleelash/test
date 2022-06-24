@@ -72,7 +72,7 @@ steps:
     ArtifactName: 'IOSdrop'
     publishLocation: 'Container'
 - task: AppStoreRelease@1
-  displayName: 'Publish the App store TestFlight Publish the App Store TestFlight'
+  displayName: 'Publish the App store TestFlight'
   inputs:
     serviceEndpoint: 'Apple AppStore'
     appIdentifier: '[e.g. com.domain.app]'
