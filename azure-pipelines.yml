@@ -75,7 +75,7 @@ steps:
   displayName: 'Publish the App store TestFlight'
   inputs:
     serviceEndpoint: 'Apple AppStore'
-    appIdentifier: '[e.g. com.domain.app]'
+    appIdentifier: 'com.actavivoact.avivo'
     appType: 'iOS'
     releaseTrack: 'TestFlight'
     appSpecificId: '124567'
