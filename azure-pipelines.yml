@@ -60,7 +60,7 @@ steps:
     args: 'CODE_SIGNING_ALLOWED=No -UseModernBuildSystem=0'
     configuration: '$(configuration)'
     xcWorkspacePath: './Actavivo/ios/actavivo.xcworkspace'
-    xcodeVersion: 'default'
+    xcodeVersion: '13'
 - task: CopyFiles@2
   inputs:
     contents: '**/*.ipa'
@@ -75,11 +75,12 @@ steps:
   displayName: 'Publish the App store TestFlight'
   inputs:
     serviceEndpoint: 'Apple AppStore'
-    appIdentifier: '[e.g. com.domain.app]'
+    appIdentifier: 'com.actavivo.actavivo'
     appType: 'iOS'
     releaseTrack: 'TestFlight'
     appSpecificId: '124567'
     shouldSkipWaitingForProcessing: true
     installFastlane: true
     signingIdentity: '$(APPLE_CERTIFICATE_SIGNING_IDENTITY)'
-    signingProvisioningProfileID: '$(APPLE_PROV_PROFILE_UUID)'
+    signingProvisioningProfileID: '$(APPLE_PROV_PROFILE_UUID)' 
+    
