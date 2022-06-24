@@ -12,40 +12,55 @@ pool:
 steps:
 - task: PowerShell@2
   inputs:
-    filePath: './devbuild.ps1'    
+    filePath: './devbuild.ps1'
 - task: Npm@1
   inputs:
     command: 'install'
     workingDir: './Actavivo'
-
+- task: CocoaPods@0
+  inputs:
+    workingDirectory: './Actavivo/ios'
+    forceRepoUpdate: true
+  displayName: 'Default pod installation'
+- task: Bash@3
+  inputs:
+    targetType: 'inline'
+    script: |
+      echo "uninstalling all cocoapods versions"
+      sudo gem uninstall cocoapods -ax
+      echo "installing latest cocopods version"
+      sudo gem install cocoapods --pre
+      sudo gem install fastlane -v 2.177.0
+      pod --version
 - task: InstallAppleCertificate@2
   inputs:
-    certSecureFile: 'IOS-Distro.p12' #IOS-Dev.p12 IOS-Distro.p12
-    certPwd: $(CertPW)
+    certSecureFile: 'Certificates.p12' 
+    certPwd: $(Aitcert)
     keychain: 'temp'
 - task: InstallAppleProvisioningProfile@1
   inputs:
     provisioningProfileLocation: 'secureFiles'
-    provProfileSecureFile: 'AV_App_Store.mobileprovision'  #'AV_Test_Profile.mobileprovision' 'AV_App_Store.mobileprovision'
+    provProfileSecureFile: 'AITDevProvisioningprofile.mobileprovision'
     removeProfile: true
-- task: CocoaPods@0
+- task: Xcode@5
+  displayName: 'Build and Sign'
   inputs:
-    workingDirectory: './Actavivo/ios'
-    forceRepoUpdate: false
-   - task: Xcode@5
-  inputs:
-    sdk: '$(sdk)'
     actions: 'build'
-    xcWorkspacePath: './Actavivo/ios/actavivo.xcworkspace'
+    sdk: '$(sdk)'
     scheme: 'actavivo'
-    xcodeVersion: "default"
-    packageApp: true
-    exportPath: '$(agent.buildDirectory)/output/$(configuration)'
     signingOption: 'manual'
     signingIdentity: '$(APPLE_CERTIFICATE_SIGNING_IDENTITY)'
-    provisioningProfileUuid: '$(APPLE_PROV_PROFILE_UUID)' 
-    exportOptions: specify
-    
+    provisioningProfileUuid: '$(APPLE_PROV_PROFILE_UUID)'
+    teamId: '3ZPX86GR9G'
+    exportTeamId: '3ZPX86GR9G'
+    packageApp: true
+    exportOptions: 'plist'
+    exportOptionsPlist: 'ExportOptions.plist'
+    exportPath: "$(system.DefaultWorkingDirectory)"
+    args: 'CODE_SIGNING_ALLOWED=No -UseModernBuildSystem=0'
+    configuration: '$(configuration)' # only testable for Debug with current config
+    xcWorkspacePath: './Actavivo/ios/actavivo.xcworkspace'
+    xcodeVersion: 'default'
 - task: CopyFiles@2
   inputs:
     #sourceFolder: "$(system.defaultworkingdirectory)/archive"
@@ -57,3 +72,4 @@ steps:
     pathtoPublish: '$(build.artifactStagingDirectory)/output/$(sdk)/$(configuration)'
     ArtifactName: 'IOSdrop'
     publishLocation: 'Container'
+`
