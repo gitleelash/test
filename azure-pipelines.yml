@@ -25,7 +25,7 @@ steps:
 - task: Bash@3
   inputs:
     targetType: 'inline'
-    script: |
+    script: 
       echo "uninstalling all cocoapods versions"
       sudo gem uninstall cocoapods -ax
       echo "installing latest cocopods version"
@@ -58,12 +58,11 @@ steps:
     exportOptionsPlist: 'ExportOptions.plist'
     exportPath: "$(system.DefaultWorkingDirectory)"
     args: 'CODE_SIGNING_ALLOWED=No -UseModernBuildSystem=0'
-    configuration: '$(configuration)' # only testable for Debug with current config
+    configuration: '$(configuration)'
     xcWorkspacePath: './Actavivo/ios/actavivo.xcworkspace'
     xcodeVersion: 'default'
 - task: CopyFiles@2
   inputs:
-    #sourceFolder: "$(system.defaultworkingdirectory)/archive"
     contents: '**/*.ipa'
     targetFolder: '$(build.artifactStagingDirectory)'
     overWrite: true
@@ -72,4 +71,15 @@ steps:
     pathtoPublish: '$(build.artifactStagingDirectory)/output/$(sdk)/$(configuration)'
     ArtifactName: 'IOSdrop'
     publishLocation: 'Container'
-`
+- task: AppStoreRelease@1
+  displayName: 'Publish the App store TestFlight Publish the App Store TestFlight'
+  inputs:
+    serviceEndpoint: 'Apple AppStore'
+    appIdentifier: '[e.g. com.domain.app]'
+    appType: 'iOS'
+    releaseTrack: 'TestFlight'
+    appSpecificId: '124567'
+    shouldSkipWaitingForProcessing: true
+    installFastlane: true
+    signingIdentity: '$(APPLE_CERTIFICATE_SIGNING_IDENTITY)'
+    signingProvisioningProfileID: '$(APPLE_PROV_PROFILE_UUID)'
